@@ -47,6 +47,19 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
+      - name: Verify TempTest SFTP secret names are configured (never print values)
+        env:
+          FHQ_TEMP_SFTP_HOST: ${{ secrets.FHQ_TEMP_SFTP_HOST }}
+          FHQ_TEMP_SFTP_USERNAME: ${{ secrets.FHQ_TEMP_SFTP_USERNAME }}
+          FHQ_TEMP_SFTP_PASSWORD: ${{ secrets.FHQ_TEMP_SFTP_PASSWORD }}
+        run: |
+          for k in FHQ_TEMP_SFTP_HOST FHQ_TEMP_SFTP_USERNAME FHQ_TEMP_SFTP_PASSWORD; do
+            if [ -n "${!k}" ]; then
+              echo "$k: configured"
+            else
+              echo "$k: missing"
+            fi
+          done
       - name: Connect through existing dedicated HTTPS PHP test page (no database writes)
         env:
           FHQ_TEMP_DB_513_HOST: ${{ secrets.FHQ_TEMP_DB_513_HOST }}
