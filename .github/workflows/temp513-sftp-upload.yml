@@ -1,0 +1,32 @@
+name: TempTest 513 - Approved SFTP Upload to IONOS
+# Only the dedicated TempTest SFTP user, restricted to public-temptest.
+# Does not merge PR, deploy other apps, or execute database statements.
+on:
+  push:
+    branches: [work/temptest-db513-chat-bridge-20261015]
+    paths:
+      - 'deploy/temptest-upload-trigger.txt'
+permissions:
+  contents: read
+jobs:
+  upload-only-temp513-bridge:
+    if: >-
+      github.repository == 'gregrazzrc-ui/TempTest' &&
+      github.actor == 'gregrazzrc-ui' &&
+      github.ref == 'refs/heads/work/temptest-db513-chat-bridge-20261015' &&
+      contains(github.event.head_commit.message, '[temptest-upload-513]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install pinned SFTP client
+        run: python3 -m pip install --quiet --disable-pip-version-check paramiko==3.5.1
+      - name: Upload only temp513-bridge.php to validated TempTest SFTP home
+        env:
+          TEMPTEST_IONOS_SFTP_HOST: ${{ secrets.TEMPTEST_IONOS_SFTP_HOST }}
+          TEMPTEST_IONOS_SFTP_USERNAME: ${{ secrets.TEMPTEST_IONOS_SFTP_USERNAME }}
+          TEMPTEST_IONOS_SFTP_PASSWORD: ${{ secrets.TEMPTEST_IONOS_SFTP_PASSWORD }}
+          TEMPTEST_SFTP_UPLOAD_APPROVED: YES_ONLY_PUBLIC_TEMPTEST
+        run: python3 scripts/deploy_temp513_sftp.py
