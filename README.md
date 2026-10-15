@@ -2,6 +2,9 @@
 
 A standalone PHP test page for https://temp.fisherhq.co.uk. It is independent of Fisher HQ production.
 
+
+**Reusable prompt for any future ChatGPT conversation:** [IONOS Database Connection — Chat Action Prompt](docs/IONOS-DATABASE-CHAT-ACTION-PROMPT.md). This gives the working GitHub Actions → IONOS PHP PDO → MariaDB connection procedure without the troubleshooting history.
+
 **Current verified GitHub → IONOS MariaDB lab:** See [IONOS MariaDB Database How-To & Acceptance Report](docs/IONOS-MARIADB-DATABASE-HOWTO.md). It records successful SFTP upload, real synthetic CRUD and cleanup, evidence links, and the still-pending normal-chat Issue trigger. The original manual PHP page below remains available as a separate diagnostic.
 
 ## Hosting
