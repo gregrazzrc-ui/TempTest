@@ -7,6 +7,9 @@ A standalone PHP test page for https://temp.fisherhq.co.uk. It is independent of
 
 **Current verified GitHub → IONOS MariaDB lab:** See [IONOS MariaDB Database How-To & Acceptance Report](docs/IONOS-MARIADB-DATABASE-HOWTO.md). It records successful SFTP upload, real synthetic CRUD and cleanup, evidence links, and the still-pending normal-chat Issue trigger. The original manual PHP page below remains available as a separate diagnostic.
 
+**Chat-based setup wizard:** [IONOS DB Setup — Guided Chat Walkthrough](docs/IONOS-DATABASE-CHAT-ACTION-PROMPT.md). In any new ChatGPT chat, say `ionos db setup`, provide the non-secret target details, confirm the proposed GitHub secret names are configured, then validate the read-only connection. This is a conversational shortcut, not an installed slash command.
+
+
 ## Hosting
 1. Create a dedicated IONOS webspace folder, for example /temptest. Do not use the production folder.
 2. Upload index.php into that folder.
