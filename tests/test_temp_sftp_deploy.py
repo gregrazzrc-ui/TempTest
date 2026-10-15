@@ -26,13 +26,12 @@ class DeployGuardsTests(unittest.TestCase):
                 "GITHUB_EVENT_NAME": "push",
                 "GITHUB_ACTOR": "gregrazzrc-ui",
                 "TEMPTEST_SFTP_UPLOAD_APPROVED": "YES_ONLY_PUBLIC_TEMPTEST",
-                "FHQ_TEMP_SFTP_HOST": "safe.example.test",
-                "FHQ_TEMP_SFTP_USERNAME": "sftpuser",
+                "FHQ_TEMP_SFTP_USERNAME": "su78426",
                 "FHQ_TEMP_SFTP_PASSWORD": "fake-not-a-real-secret"
             }
             with self.assertRaisesRegex(deploy.Refuse, "SOURCE_OR_PINNED_HOST_KEY_MISSING"):
                 deploy.verify_local(env, base)
-            (base / "deploy/ionos_sftp_known_hosts").write_text("other.example.test ssh-ed25519 AAAATESTKEY\n")
+            (base / "deploy/ionos_sftp_known_hosts").write_text("wrong.example.test ssh-ed25519 AAAATESTKEY\n")
             with self.assertRaisesRegex(deploy.Refuse, "HOST_KEY_NOT_VERIFIED"):
                 deploy.verify_local(env, base)
 
