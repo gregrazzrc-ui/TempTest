@@ -1,0 +1,40 @@
+name: TempTest 513 - Owner Issue Commands
+# Requires explicit owner approval to merge this workflow onto default branch.
+# All SQL is fixed by repository code; issues cannot include custom SQL.
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+concurrency:
+  group: temptest-db513-commands
+  cancel-in-progress: false
+jobs:
+  owner-command:
+    if: >-
+      github.repository == 'gregrazzrc-ui/TempTest' &&
+      github.event.issue.user.login == 'gregrazzrc-ui' &&
+      startsWith(github.event.issue.title, 'TEMPTEST-513: ')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          ref: main
+      - name: Install pinned MariaDB client library
+        run: python3 -m pip install --quiet --disable-pip-version-check PyMySQL==1.1.1
+      - name: Validate owner command and execute fixed synthetic test
+        env:
+          FHQ_TEMP_DB_513_HOST: ${{ secrets.FHQ_TEMP_DB_513_HOST }}
+          FHQ_TEMP_DB_513_USERNAME: ${{ secrets.FHQ_TEMP_DB_513_USERNAME }}
+          FHQ_TEMP_DB_513_PASSWORD: ${{ secrets.FHQ_TEMP_DB_513_PASSWORD }}
+        run: python3 scripts/temp_db_513_bridge.py --issue
+      - name: Preserve sanitized result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: temptest-db513-issue-result
+          path: ${{ runner.temp }}/temptest-db513-result.json
+          retention-days: 7
+          if-no-files-found: warn
