@@ -1,28 +1,33 @@
-# TempTest 513 — standalone normal-chat database capability test
+# TempTest 513 — GitHub issue to isolated IONOS MariaDB CRUD
 
-**Repository scope:** `gregrazzrc-ui/TempTest` only. `index.php` is unchanged. No site deployment, other repositories, SFTP reuse or database writes have been authorised.
+## Scope and status
 
-## Existing fixed database identity
+This experiment is **only** in `gregrazzrc-ui/TempTest`. Nothing here belongs in Fisher HQ. The existing `index.php` remains unchanged. The work is in draft PR #1; the new PHP endpoint **has not been uploaded** to IONOS, and no database writes have been performed by the new bridge.
 
-- MariaDB database: `dbs16231513`
-- Host: `db5021656421.hosting-data.io`
-- Username: `dbu5597618`
-- TCP port: `3306`
-- TempTest GitHub Actions **repository secrets**: `FHQ_TEMP_DB_513_HOST`, `FHQ_TEMP_DB_513_USERNAME`, `FHQ_TEMP_DB_513_PASSWORD`.
+## Existing credentials (no new password or token)
 
-The code rejects any different host or username; secrets are never printed or used in PR tests. The password secret must contain the **database** password, not an FTP password.
+All three are **GitHub Actions repository secrets under TempTest**:
 
-## How the route works
+- `FHQ_TEMP_DB_513_HOST` = `db5021656421.hosting-data.io`
+- `FHQ_TEMP_DB_513_USERNAME` = `dbu5597618`
+- `FHQ_TEMP_DB_513_PASSWORD` = the IONOS MariaDB password
 
-PR checks run offline Python boundary tests and syntax-check the unchanged `index.php`. On feature-branch pushes, a separate GitHub-hosted Linux job opens the existing `https://temp.fisherhq.co.uk/` page over verified HTTPS, obtains its CSRF token and session cookie, and submits the built-in `connect` action using the TempTest database secret. It parses only the page's PASS rows; the code never logs raw page output or credentials.
+Database `dbs16231513`, port `3306`, MariaDB 11.8. The GitHub workflow supplies the database password over HTTPS at runtime, then PHP uses PDO to authenticate to IONOS. **Never paste the password in Issues, commit it to PHP, or create another database credential.** No additional bridge token is required for this disposable lab. Access to the public endpoint is authenticated by successfully connecting with the existing database password; for production systems use stronger separately managed endpoint authorization.
 
-The first experiment connecting directly from a GitHub runner to the MariaDB TCP host failed `SECURE_DB_CONNECTION_FAILED`; this could reflect external network/TLS restrictions. We therefore use the **existing PHP hosting route** for read-only connection verification. No new PHP is uploaded.
+## Architecture
 
-The PHP page checks database identity and current authenticated account. If the account string reported by the hosting server differs from the expected account, the read-only check reports an explicit `account_verified: false` warning. The separate full test is **blocked before any write** until this discrepancy is resolved.
+1. ChatGPT creates an exact allowlisted **TempTest** Issue on the owner's behalf.
+2. A GitHub Actions workflow checks author, repository, exact issue title and three-line body.
+3. Actions reads the three existing TempTest secrets and sends a small JSON POST over verified HTTPS to `https://temp.fisherhq.co.uk/temp513-bridge.php`.
+4. The standalone PHP file uses `new PDO(...)` with the **fixed** temporary host, database, username and password provided by GitHub. It validates `DATABASE()`, `USER()` and MariaDB version, without demanding that `CURRENT_USER()` match the login (MariaDB privilege accounts can differ).
+5. PHP performs **only** the fixed synthetic table operation; it returns a small sanitized JSON result.
+6. Actions validates the returned database, operation and row shape, prints a sanitized result, and stores a seven-day artifact for ChatGPT to read.
 
-## Chat-triggered test commands (only after explicit owner approval and merge)
+**No arbitrary SQL, table names, customer data, production databases, remote SSH or production deployments are involved.**
 
-Once the dedicated TempTest draft PR is approved and merged onto TempTest `main`, the `issues: opened` workflow can accept only an exact-format Issue authored by the repository owner. Initially the supported commands are `TEMPTEST-513: status` (connection only) and `TEMPTEST-513: full-test` (existing PHP site's full self-cleaning capability test). The exact body for status is:
+## Six test commands
+
+GitHub Issue title must be one of `TEMPTEST-513: status`, `TEMPTEST-513: create`, `TEMPTEST-513: read`, `TEMPTEST-513: update`, `TEMPTEST-513: delete`, `TEMPTEST-513: cleanup`. Its body must be exactly (change the operation to match the title):
 
 ```text
 TEMPTEST_513_V1
@@ -30,10 +35,24 @@ operation=status
 database=dbs16231513
 ```
 
-For the full-test, change the title to `TEMPTEST-513: full-test` and the body operation to `operation=full-test`. The existing PHP page then creates its own `work_capability_site_test` table, tests five records, update/delete, schema changes, transactions, migration reversal and cleanup in one server-side request. **This is not separate persistent CRUD across multiple chat turns.** If separate persistent create/read/update/delete is needed later, a dedicated TempTest-only authenticated server-side bridge must be added and deployed with separate owner permission.
+- `status`: read-only check whether the synthetic table exists.
+- `create`: create `temptest_chat_probe_513_v1` with exactly three fake records (Alpha, Beta, Gamma); refuse an existing table.
+- `read`: return the fixture rows.
+- `update`: change Beta from CREATED to UPDATED.
+- `delete`: delete Gamma.
+- `cleanup`: drop only the table after verifying its expected schema and marker values.
 
-The full-test command performs a first `connect` request and requires the expected authenticated account before invoking any write. It also requires all built-in checks and cleanup to return PASS. The operations and table are fixed; user-supplied SQL is never accepted. No full-test Issues have been created or executed.
+Each Issue is independently authorized. GitHub workflow serializes operations, so the intended test sequence is status → create → read → update → read → delete → read → cleanup → status.
 
-## Current validation and approval gates
+## Required owner-reviewed setup before activating
 
-Review the latest branch/PR Actions evidence. A PASS from offline tests is not live DB proof. Even a PASS from the read-only HTTPS check does not authorise merges or write tests. PR remains draft until the owner explicitly approves merging; no production or live site deployments are part of this task.
+1. Review the draft PR and its GitHub Actions static checks (including `php -l deploy/temp513-bridge.php`).
+2. **Only when explicitly approved**, upload that exact PHP file to the separate IONOS `public-temptest` directory as `temp513-bridge.php`; it must resolve at `https://temp.fisherhq.co.uk/temp513-bridge.php` and be served over HTTPS. **Never** upload it to any Fisher HQ web folder.
+3. **Only when explicitly approved**, merge PR #1 into **TempTest** `main`. This activates GitHub Issues commands, not any site deployment.
+4. From TempTest Actions, manually run `TempTest 513 - Owner HTTPS Test Commands` (workflow_dispatch): this invokes **status only**, no writes. Inspect sanitized GitHub logs.
+5. Obtain separate explicit approval for CREATE/UPDATE/DELETE/CLEANUP commands before opening their test Issues.
+6. After the exercise, use `cleanup`, remove `temp513-bridge.php` from IONOS, and delete the disposable DB and unused secrets.
+
+## Verified so far
+
+A GitHub-hosted action reached the existing TempTest `index.php` via HTTPS, submitted `Check connection only` using the existing DB password secret, and got passing connection and database identity checks. Direct GitHub-to-IONOS MySQL TCP access failed and is not used. The original page's `CURRENT_USER()` privilege account differed from the assumed login; the staged new bridge checks `USER()` for login identity and merely reports whether the grant account differs. This new endpoint has not yet been deployed or connection-tested live.
