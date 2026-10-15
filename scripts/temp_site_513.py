@@ -73,12 +73,15 @@ def verify_page(html: str, operation: str) -> dict:
         raise bridge.ProbeBlocked("SITE_TEST_INCOMPLETE_OR_FAILED")
     if not rows["Database identity"][1].startswith(bridge.DATABASE + " /"):
         raise bridge.ProbeBlocked("SITE_DATABASE_MISMATCH")
-    if not rows["Authenticated account"][1].startswith(bridge.USERNAME + "@"):
+    account_verified = rows["Authenticated account"][1].split("@", 1)[0] == bridge.USERNAME
+    if operation == "full-test" and not account_verified:
         raise bridge.ProbeBlocked("SITE_ACCOUNT_MISMATCH")
     if operation == "full-test" and rows["Cleanup"][1] != "Test table and all its records removed.":
         raise bridge.ProbeBlocked("SITE_CLEANUP_UNVERIFIED")
     return {"route": "TempTest HTTPS PHP form", "read_only": operation == "status",
-            "verified_checks": len(expected), "cleanup_verified": operation == "full-test"}
+            "verified_checks": len(expected), "account_verified": account_verified,
+            "identity_warning": None if account_verified else "SITE_ACCOUNT_DIFFERENT",
+            "cleanup_verified": operation == "full-test"}
 
 
 def site_request(password: str, operation: str) -> dict:
@@ -106,12 +109,17 @@ def site_request(password: str, operation: str) -> dict:
     parsed.feed(html)
     if not parsed.csrf or len(parsed.csrf) != 64 or not all(c in "0123456789abcdef" for c in parsed.csrf):
         raise bridge.ProbeBlocked("SITE_CSRF_UNAVAILABLE")
-    payload = urllib.parse.urlencode({"csrf": parsed.csrf, "password": password,
-                                      "action": SITE_COMMANDS[operation]}).encode("utf-8")
-    html = read_response(urllib.request.Request(URL, data=payload,
-                        headers={"Content-Type": "application/x-www-form-urlencoded",
-                                 "User-Agent": "TempTest513Probe/1"}))
-    return verify_page(html, operation)
+    def send_form(action):
+        payload = urllib.parse.urlencode({"csrf": parsed.csrf, "password": password,
+                                          "action": action}).encode("utf-8")
+        return read_response(urllib.request.Request(URL, data=payload,
+                            headers={"Content-Type": "application/x-www-form-urlencoded",
+                                     "User-Agent": "TempTest513Probe/1"}))
+    if operation == "full-test":
+        identity = verify_page(send_form("connect"), "status")
+        if not identity["account_verified"]:
+            raise bridge.ProbeBlocked("SITE_ACCOUNT_MISMATCH_BEFORE_WRITE")
+    return verify_page(send_form(SITE_COMMANDS[operation]), operation)
 
 
 def issue_command(event: object) -> tuple[int, str]:
