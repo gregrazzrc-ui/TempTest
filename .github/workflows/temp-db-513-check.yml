@@ -7,10 +7,12 @@ on:
       - 'scripts/temp_db_513_bridge.py'
       - 'scripts/temp_site_513.py'
       - 'scripts/temp_endpoint_513.py'
+      - 'scripts/deploy_temp513_sftp.py'
       - 'deploy/temp513-bridge.php'
       - 'tests/test_temp_db_513_bridge.py'
       - 'tests/test_temp_site_513.py'
       - 'tests/test_temp_endpoint_513.py'
+      - 'tests/test_temp_sftp_deploy.py'
       - 'tests/test_temp_account_identity.py'
       - 'docs/CHAT-BRIDGE.md'
   push:
@@ -27,7 +29,7 @@ jobs:
           persist-credentials: false
       - name: Test fixed-operation guards and PHP form parser (no secrets)
         run: |
-          python3 -m py_compile scripts/temp_db_513_bridge.py scripts/temp_site_513.py scripts/temp_endpoint_513.py
+          python3 -m py_compile scripts/temp_db_513_bridge.py scripts/temp_site_513.py scripts/temp_endpoint_513.py scripts/deploy_temp513_sftp.py
           python3 -m unittest discover -s tests -p 'test_temp*.py' -v
       - name: Existing PHP page syntax (no deployment)
         run: |
