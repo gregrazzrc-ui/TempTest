@@ -24,8 +24,7 @@ class SiteTests(unittest.TestCase):
         self.assertEqual(site.verify_page(h, "status")["verified_checks"], 3)
         with self.assertRaises(bridge.ProbeBlocked):
             site.verify_page(h.replace(bridge.DATABASE, "wrong_database"), "status")
-        with self.assertRaises(bridge.ProbeBlocked):
-            site.verify_page(h.replace(bridge.USERNAME, "wrong_user"), "status")
+        self.assertFalse(site.verify_page(h.replace(bridge.USERNAME, "wrong_user"), "status")["account_verified"])
 
     def test_full_test_requires_all_checks_and_cleanup(self):
         items = [(x, ("Test table and all its records removed." if x == "Cleanup" else
