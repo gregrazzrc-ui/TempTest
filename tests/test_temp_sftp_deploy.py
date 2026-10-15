@@ -28,7 +28,7 @@ class DeployGuardsTests(unittest.TestCase):
                 "TEMPTEST_SFTP_UPLOAD_APPROVED": "YES_ONLY_PUBLIC_TEMPTEST",
                 "TEMPTEST_IONOS_SFTP_HOST": "safe.example.test",
                 "TEMPTEST_IONOS_SFTP_USERNAME": "sftpuser",
-                "TEMPTEST_IONOS_SFTP_PASSWORD": "fake-not-a-real-secret"
+                "FHQ_TEMP_SFTP_PASSWORD": "fake-not-a-real-secret"
             }
             with self.assertRaisesRegex(deploy.Refuse, "SOURCE_OR_PINNED_HOST_KEY_MISSING"):
                 deploy.verify_local(env, base)
