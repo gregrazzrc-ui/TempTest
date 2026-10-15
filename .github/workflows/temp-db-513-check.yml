@@ -1,0 +1,55 @@
+name: TempTest 513 - Bridge Boundary and Read-Only Connection
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - '.github/workflows/temp-db-513-*.yml'
+      - 'scripts/temp_db_513_bridge.py'
+      - 'tests/test_temp_db_513_bridge.py'
+      - 'docs/CHAT-BRIDGE.md'
+  push:
+    branches: [work/temptest-db513-chat-bridge-20261015]
+permissions:
+  contents: read
+jobs:
+  offline-boundaries:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Test import and allowlist boundaries (no database credentials)
+        run: |
+          python3 -m py_compile scripts/temp_db_513_bridge.py
+          python3 -m unittest discover -s tests -p 'test_temp_db_513_bridge.py' -v
+      - name: Existing PHP page syntax (no deployment)
+        run: php -l index.php
+  read-only-db-preflight:
+    if: >-
+      github.event_name == 'push' &&
+      github.repository == 'gregrazzrc-ui/TempTest' &&
+      github.ref == 'refs/heads/work/temptest-db513-chat-bridge-20261015' &&
+      github.actor == 'gregrazzrc-ui'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install pinned MariaDB client library
+        run: python3 -m pip install --quiet --disable-pip-version-check PyMySQL==1.1.1
+      - name: Connect to disposable MariaDB using verified TLS (no writes)
+        env:
+          FHQ_TEMP_DB_513_HOST: ${{ secrets.FHQ_TEMP_DB_513_HOST }}
+          FHQ_TEMP_DB_513_USERNAME: ${{ secrets.FHQ_TEMP_DB_513_USERNAME }}
+          FHQ_TEMP_DB_513_PASSWORD: ${{ secrets.FHQ_TEMP_DB_513_PASSWORD }}
+        run: python3 scripts/temp_db_513_bridge.py --probe
+      - name: Preserve sanitized result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: temptest-db513-readonly-result
+          path: ${{ runner.temp }}/temptest-db513-result.json
+          retention-days: 7
+          if-no-files-found: warn
