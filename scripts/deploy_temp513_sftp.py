@@ -18,6 +18,8 @@ BRANCH = "refs/heads/work/temptest-db513-chat-bridge-20261015"
 SOURCE = Path("deploy/temp513-bridge.php")
 KNOWN_HOSTS = Path("deploy/ionos_sftp_known_hosts")
 DEST = "temp513-bridge.php"
+SFTP_HOST = "access-5021528741.webspace-host.com"
+SFTP_USERNAME = "su78426"
 MAX_SOURCE = 25000
 MARKERS = (b"TempTest", b"dbs16231513", b"ISOLATED DATABASE LAB")
 
@@ -33,14 +35,14 @@ def verify_local(env: dict[str, str], base: Path) -> tuple[str, str, str, bytes]
         raise Refuse("UNAUTHORIZED_TRIGGER")
     if env.get("TEMPTEST_SFTP_UPLOAD_APPROVED") != "YES_ONLY_PUBLIC_TEMPTEST":
         raise Refuse("OWNER_APPROVAL_MISSING")
-    host = env.get("FHQ_TEMP_SFTP_HOST", "").strip()
+    host = SFTP_HOST
     username = env.get("FHQ_TEMP_SFTP_USERNAME", "").strip()
     password = env.get("FHQ_TEMP_SFTP_PASSWORD", "")
     if not host or not username or not password:
         raise Refuse("SFTP_SECRETS_MISSING")
-    if any(c.isspace() or c in "/\\@:" for c in host) or len(host) > 253:
+    if host != SFTP_HOST:
         raise Refuse("INVALID_SFTP_HOST")
-    if any(c.isspace() for c in username) or len(username) > 128:
+    if username != SFTP_USERNAME:
         raise Refuse("INVALID_SFTP_USERNAME")
     source = base / SOURCE
     known = base / KNOWN_HOSTS
