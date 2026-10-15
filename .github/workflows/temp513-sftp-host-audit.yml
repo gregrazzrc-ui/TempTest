@@ -1,0 +1,22 @@
+name: TempTest 513 - SFTP Host Key Audit
+on:
+  push:
+    branches: [work/temptest-db513-chat-bridge-20261015]
+    paths:
+      - '.github/workflows/temp513-sftp-host-audit.yml'
+permissions:
+  contents: read
+jobs:
+  read-public-sftp-host-key:
+    if: github.repository == 'gregrazzrc-ui/TempTest'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Retrieve only the public SFTP host key (no passwords or file writes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh-keyscan -T 10 -p 22 -t ed25519 access-5021528741.webspace-host.com 2>/dev/null > hostkey.txt
+          test "$(wc -l < hostkey.txt)" -eq 1
+          grep -E '^access-5021528741\.webspace-host\.com ssh-ed25519 ' hostkey.txt
+          ssh-keygen -lf hostkey.txt -E sha256
