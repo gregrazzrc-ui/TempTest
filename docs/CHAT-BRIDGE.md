@@ -44,6 +44,20 @@ database=dbs16231513
 
 Each Issue is independently authorized. GitHub workflow serializes operations, so the intended test sequence is status → create → read → update → read → delete → read → cleanup → status.
 
+## Automated IONOS SFTP upload (no manual copying)
+
+The SFTP upload is **staged but not triggered**. In IONOS create a **new SFTP account whose home directory is exclusively `public-temptest`**; it must not have access to Fisher HQ web folders.
+
+Create these **three new GitHub Actions repository secrets in `gregrazzrc-ui/TempTest`**:
+
+- `TEMPTEST_IONOS_SFTP_HOST` = IONOS SFTP hostname (not the MariaDB hostname).
+- `TEMPTEST_IONOS_SFTP_USERNAME` = new dedicated IONOS SFTP login.
+- `TEMPTEST_IONOS_SFTP_PASSWORD` = new dedicated IONOS SFTP password.
+
+These are **file upload credentials**, distinct from the three existing `FHQ_TEMP_DB_513_*` database secrets. Do not paste the SFTP password into ChatGPT. Confirm the SFTP hostname in chat (hostnames aren't passwords), so the public SSH host key can be verified independently and pinned at `deploy/ionos_sftp_known_hosts`. No host-key pin means the action **fails closed** rather than risking credential exposure.
+
+The upload action is triggered only by an owner-authored commit to `deploy/temptest-upload-trigger.txt` with message marker `[temptest-upload-513]` on the TempTest feature branch. It does **not** merge the PR. It uploads only `deploy/temp513-bridge.php`, refuses to overwrite an existing endpoint, and checks for the expected `index.php` and database identity in the SFTP home before any remote file creation. The result is recorded in GitHub Actions.
+
 ## Required owner-reviewed setup before activating
 
 1. Review the draft PR and its GitHub Actions static checks (including `php -l deploy/temp513-bridge.php`).
