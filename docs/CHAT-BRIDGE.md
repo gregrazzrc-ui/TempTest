@@ -50,8 +50,8 @@ The SFTP upload is **staged but not triggered**. In IONOS create a **new SFTP ac
 
 Create these **three new GitHub Actions repository secrets in `gregrazzrc-ui/TempTest`**:
 
-- `TEMPTEST_IONOS_SFTP_HOST` = IONOS SFTP hostname (not the MariaDB hostname).
-- `TEMPTEST_IONOS_SFTP_USERNAME` = new dedicated IONOS SFTP login.
+- `FHQ_TEMP_SFTP_HOST` = IONOS SFTP hostname (not the MariaDB hostname).
+- `FHQ_TEMP_SFTP_USERNAME` = new dedicated IONOS SFTP login.
 - `FHQ_TEMP_SFTP_PASSWORD` = new dedicated IONOS SFTP password.
 
 These are **file upload credentials**, distinct from the three existing `FHQ_TEMP_DB_513_*` database secrets. Do not paste the SFTP password into ChatGPT. Confirm the SFTP hostname in chat (hostnames aren't passwords), so the public SSH host key can be verified independently and pinned at `deploy/ionos_sftp_known_hosts`. No host-key pin means the action **fails closed** rather than risking credential exposure.
