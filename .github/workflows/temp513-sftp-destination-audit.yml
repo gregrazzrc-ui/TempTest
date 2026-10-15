@@ -1,0 +1,26 @@
+name: TempTest 513 - SFTP Destination Read Only
+on:
+  push:
+    branches: [work/temptest-db513-chat-bridge-20261015]
+    paths:
+      - '.github/workflows/temp513-sftp-destination-audit.yml'
+permissions:
+  contents: read
+jobs:
+  inspect-dedicated-temp-account:
+    if: >-
+      github.repository == 'gregrazzrc-ui/TempTest' &&
+      github.actor == 'gregrazzrc-ui'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install pinned SFTP dependency
+        run: python3 -m pip install --quiet --disable-pip-version-check paramiko==3.5.1
+      - name: Validate exact SFTP site folder without uploading
+        env:
+          FHQ_TEMP_SFTP_USERNAME: ${{ secrets.FHQ_TEMP_SFTP_USERNAME }}
+          FHQ_TEMP_SFTP_PASSWORD: ${{ secrets.FHQ_TEMP_SFTP_PASSWORD }}
+        run: python3 scripts/audit_temp513_sftp.py
