@@ -33,8 +33,8 @@ def verify_local(env: dict[str, str], base: Path) -> tuple[str, str, str, bytes]
         raise Refuse("UNAUTHORIZED_TRIGGER")
     if env.get("TEMPTEST_SFTP_UPLOAD_APPROVED") != "YES_ONLY_PUBLIC_TEMPTEST":
         raise Refuse("OWNER_APPROVAL_MISSING")
-    host = env.get("TEMPTEST_IONOS_SFTP_HOST", "").strip()
-    username = env.get("TEMPTEST_IONOS_SFTP_USERNAME", "").strip()
+    host = env.get("FHQ_TEMP_SFTP_HOST", "").strip()
+    username = env.get("FHQ_TEMP_SFTP_USERNAME", "").strip()
     password = env.get("FHQ_TEMP_SFTP_PASSWORD", "")
     if not host or not username or not password:
         raise Refuse("SFTP_SECRETS_MISSING")
