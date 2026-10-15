@@ -1,0 +1,38 @@
+name: TempTest 513 - Database Acceptance
+# Owner-authorised disposable acceptance only. Trigger file STATUS then FULL.
+on:
+  push:
+    branches: [work/temptest-db513-chat-bridge-20261015]
+    paths:
+      - 'deploy/temptest-db-acceptance-trigger.txt'
+permissions:
+  contents: read
+concurrency:
+  group: temptest-db513-acceptance
+  cancel-in-progress: false
+jobs:
+  disposable-acceptance:
+    if: >-
+      github.repository == 'gregrazzrc-ui/TempTest' &&
+      github.actor == 'gregrazzrc-ui' &&
+      contains(github.event.head_commit.message, '[temptest-acceptance-513]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Test exact TempTest operation sequence via HTTPS
+        env:
+          FHQ_TEMP_DB_513_HOST: ${{ secrets.FHQ_TEMP_DB_513_HOST }}
+          FHQ_TEMP_DB_513_USERNAME: ${{ secrets.FHQ_TEMP_DB_513_USERNAME }}
+          FHQ_TEMP_DB_513_PASSWORD: ${{ secrets.FHQ_TEMP_DB_513_PASSWORD }}
+        run: python3 scripts/accept_temp513_database.py
+      - name: Preserve redacted acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: temptest-db513-acceptance
+          path: ${{ runner.temp }}/temp513-acceptance.json
+          retention-days: 7
+          if-no-files-found: warn
