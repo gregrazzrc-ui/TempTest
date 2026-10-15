@@ -2,6 +2,14 @@
 
 A standalone PHP test page for https://temp.fisherhq.co.uk. It is independent of Fisher HQ production.
 
+
+**Reusable prompt for any future ChatGPT conversation:** [IONOS Database Connection — Chat Action Prompt](docs/IONOS-DATABASE-CHAT-ACTION-PROMPT.md). This gives the working GitHub Actions → IONOS PHP PDO → MariaDB connection procedure without the troubleshooting history.
+
+**Current verified GitHub → IONOS MariaDB lab:** See [IONOS MariaDB Database How-To & Acceptance Report](docs/IONOS-MARIADB-DATABASE-HOWTO.md). It records successful SFTP upload, real synthetic CRUD and cleanup, evidence links, and the still-pending normal-chat Issue trigger. The original manual PHP page below remains available as a separate diagnostic.
+
+**Chat-based setup wizard:** [IONOS DB Setup — Guided Chat Walkthrough](docs/IONOS-DATABASE-CHAT-ACTION-PROMPT.md). In any new ChatGPT chat, say `ionos db setup`, provide the non-secret target details, confirm the proposed GitHub secret names are configured, then validate the read-only connection. This is a conversational shortcut, not an installed slash command.
+
+
 ## Hosting
 1. Create a dedicated IONOS webspace folder, for example /temptest. Do not use the production folder.
 2. Upload index.php into that folder.
@@ -30,13 +38,10 @@ Schema reversal uses ALTER TABLE; it is separate from transaction rollback.
 The test does not delete the database or modify other tables.
 Only executed checks receive results; subsequent checks stop on failure.
 
-## Deployment from GitHub
-No automatic deployment has been configured. Before adding it, identify the IONOS SFTP/SSH endpoint, account, dedicated destination folder and authentication method. Keep deployment credentials in GitHub Actions secrets, never committed files.
-The repository alone does not host PHP. GitHub Pages cannot execute this page.
-Do not point a deployment at Fisher HQ's production folder.
+## GitHub-to-IONOS connection (verified TempTest-only bridge)
+A dedicated GitHub Actions SFTP upload workflow successfully placed `deploy/temp513-bridge.php` in the isolated `public-temptest` hosting directory. The separate MariaDB acceptance workflow then used the **existing TempTest GitHub database Secrets** to run actual create/read/update/delete/cleanup through the HTTPS PHP PDO endpoint. A final database `status` verified the fixture was removed. See the [full how-to](docs/IONOS-MARIADB-DATABASE-HOWTO.md) for the exact setup, branch workflows, confirmed run IDs and safe teardown.
+
+The PHP site is hosted by IONOS, **not GitHub Pages**. The bridge is temporary and remains uploaded until deliberately removed. The normal-chat → GitHub Issue path is staged in **draft PR #1** but has not been tested end-to-end because it is not merged onto `main`.
 
 ## Verification status
-The equivalent CRUD, schema, transaction and cleanup operations were executed successfully through IONOS phpMyAdmin before this page was created.
-This PHP page must still be linted and tested on PHP hosting. The local preparation environment has no PHP interpreter.
-The phpMyAdmin test used its own IONOS account; this page intentionally tests the supplied database user separately.
-Remove the site and temporary database after the exercise.
+The earlier phpMyAdmin experiment was followed by actual GitHub Actions live database acceptance on 15 October 2026: **PASS** ([run #38773537809](https://github.com/gregrazzrc-ui/TempTest/actions/runs/38773537809)). Offline Python tests and PHP syntax validation also passed. The old manual page and the new GitHub-operated PHP endpoint are distinct interfaces. Remove the temporary bridge, site and database when the lab is finished and removal is explicitly authorised.

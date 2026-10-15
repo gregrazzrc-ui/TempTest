@@ -1,0 +1,46 @@
+name: TempTest 513 - Owner HTTPS Test Commands
+# Workflow is inert until this TempTest-only PR is owner-approved and merged.
+# Uses the dedicated TempTest-only PDO endpoint; database password supplied by GitHub Secret.
+on:
+  workflow_dispatch: # Owner can run read-only status after separate endpoint deployment approval
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+concurrency:
+  group: temptest-db513-commands
+  cancel-in-progress: false
+jobs:
+  owner-command:
+    if: >-
+      github.repository == 'gregrazzrc-ui/TempTest' &&
+      ((github.event_name == 'workflow_dispatch' && github.actor == 'gregrazzrc-ui') ||
+       (github.event_name == 'issues' &&
+        github.event.issue.user.login == 'gregrazzrc-ui' &&
+        startsWith(github.event.issue.title, 'TEMPTEST-513: ')))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          ref: main
+      - name: Verify exact issue author, operation and disposable DB before HTTPS request
+        env:
+          FHQ_TEMP_DB_513_HOST: ${{ secrets.FHQ_TEMP_DB_513_HOST }}
+          FHQ_TEMP_DB_513_USERNAME: ${{ secrets.FHQ_TEMP_DB_513_USERNAME }}
+          FHQ_TEMP_DB_513_PASSWORD: ${{ secrets.FHQ_TEMP_DB_513_PASSWORD }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            python3 scripts/temp_endpoint_513.py --probe
+          else
+            python3 scripts/temp_endpoint_513.py --issue
+          fi
+      - name: Preserve sanitized result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: temptest-db513-issue-result
+          path: ${{ runner.temp }}/temptest-db513-result.json
+          retention-days: 7
+          if-no-files-found: warn

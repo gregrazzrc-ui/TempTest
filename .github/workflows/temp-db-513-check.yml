@@ -1,0 +1,79 @@
+name: TempTest 513 - Boundary Tests and HTTPS Connection
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - '.github/workflows/temp-db-513-*.yml'
+      - 'scripts/temp_db_513_bridge.py'
+      - 'scripts/temp_site_513.py'
+      - 'scripts/temp_endpoint_513.py'
+      - 'scripts/deploy_temp513_sftp.py'
+      - 'deploy/temp513-bridge.php'
+      - 'tests/test_temp_db_513_bridge.py'
+      - 'tests/test_temp_site_513.py'
+      - 'tests/test_temp_endpoint_513.py'
+      - 'tests/test_temp_sftp_deploy.py'
+      - 'tests/test_temp_account_identity.py'
+      - 'docs/CHAT-BRIDGE.md'
+      - 'docs/IONOS-MARIADB-DATABASE-HOWTO.md'
+      - 'README.md'
+      - 'tests/test_ionos_howto.py'
+  push:
+    branches: [work/temptest-db513-chat-bridge-20261015]
+permissions:
+  contents: read
+jobs:
+  offline-boundaries:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Test fixed-operation guards and PHP form parser (no secrets)
+        run: |
+          python3 -m py_compile scripts/temp_db_513_bridge.py scripts/temp_site_513.py scripts/temp_endpoint_513.py scripts/deploy_temp513_sftp.py
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Existing PHP page syntax (no deployment)
+        run: |
+          php -l index.php
+          php -l deploy/temp513-bridge.php
+  read-only-site-preflight:
+    if: >-
+      github.event_name == 'push' &&
+      github.repository == 'gregrazzrc-ui/TempTest' &&
+      github.ref == 'refs/heads/work/temptest-db513-chat-bridge-20261015' &&
+      github.actor == 'gregrazzrc-ui'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify TempTest SFTP secret names are configured (never print values)
+        env:
+          FHQ_TEMP_SFTP_HOST: ${{ secrets.FHQ_TEMP_SFTP_HOST }}
+          FHQ_TEMP_SFTP_USERNAME: ${{ secrets.FHQ_TEMP_SFTP_USERNAME }}
+          FHQ_TEMP_SFTP_PASSWORD: ${{ secrets.FHQ_TEMP_SFTP_PASSWORD }}
+        run: |
+          for k in FHQ_TEMP_SFTP_HOST FHQ_TEMP_SFTP_USERNAME FHQ_TEMP_SFTP_PASSWORD; do
+            if [ -n "${!k}" ]; then
+              echo "$k: configured"
+            else
+              echo "$k: missing"
+            fi
+          done
+      - name: Connect through existing dedicated HTTPS PHP test page (no database writes)
+        env:
+          FHQ_TEMP_DB_513_HOST: ${{ secrets.FHQ_TEMP_DB_513_HOST }}
+          FHQ_TEMP_DB_513_USERNAME: ${{ secrets.FHQ_TEMP_DB_513_USERNAME }}
+          FHQ_TEMP_DB_513_PASSWORD: ${{ secrets.FHQ_TEMP_DB_513_PASSWORD }}
+        run: python3 scripts/temp_site_513.py --probe
+      - name: Preserve sanitized result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: temptest-db513-https-result
+          path: ${{ runner.temp }}/temptest-db513-result.json
+          retention-days: 7
+          if-no-files-found: warn

@@ -1,0 +1,3 @@
+TEMPTEST-513 APPROVED UPLOAD
+Deploy only deploy/temp513-bridge.php to the verified dedicated TempTest SFTP home.
+Approved by user on 2026-10-15. Never upload Fisher HQ files.
