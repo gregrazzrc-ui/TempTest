@@ -27,6 +27,6 @@ jobs:
         env:
           TEMPTEST_IONOS_SFTP_HOST: ${{ secrets.TEMPTEST_IONOS_SFTP_HOST }}
           TEMPTEST_IONOS_SFTP_USERNAME: ${{ secrets.TEMPTEST_IONOS_SFTP_USERNAME }}
-          TEMPTEST_IONOS_SFTP_PASSWORD: ${{ secrets.TEMPTEST_IONOS_SFTP_PASSWORD }}
+          FHQ_TEMP_SFTP_PASSWORD: ${{ secrets.FHQ_TEMP_SFTP_PASSWORD }}
           TEMPTEST_SFTP_UPLOAD_APPROVED: YES_ONLY_PUBLIC_TEMPTEST
         run: python3 scripts/deploy_temp513_sftp.py
