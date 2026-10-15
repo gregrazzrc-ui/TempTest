@@ -1,20 +1,28 @@
-# TempTest 513 — normal chat to disposable database experiment
+# TempTest 513 — standalone normal-chat database capability test
 
-All implementation and test files are **only in TempTest**. The existing `index.php` page and deployment settings are unchanged. No deploy step is included. No PHP files are uploaded to any server by these workflows.
+**Repository scope:** `gregrazzrc-ui/TempTest` only. `index.php` is unchanged. No site deployment, other repositories, SFTP reuse or database writes have been authorised.
 
-## Identity and credentials
+## Existing fixed database identity
 
-The only permissible MariaDB target is `dbs16231513`, hostname `db5021656421.hosting-data.io`, account `dbu5597618`, TCP port `3306`. These literal checks are enforced in Python. The three repository **Actions secrets** are `FHQ_TEMP_DB_513_HOST`, `FHQ_TEMP_DB_513_USERNAME` and `FHQ_TEMP_DB_513_PASSWORD`. Do not put credentials in GitHub issues or source files. The password must be the database password, not an FTP/SFTP password. GitHub secrets cannot be read back to verify their contents.
+- MariaDB database: `dbs16231513`
+- Host: `db5021656421.hosting-data.io`
+- Username: `dbu5597618`
+- TCP port: `3306`
+- TempTest GitHub Actions **repository secrets**: `FHQ_TEMP_DB_513_HOST`, `FHQ_TEMP_DB_513_USERNAME`, `FHQ_TEMP_DB_513_PASSWORD`.
 
-## Deployment and proof of connectivity
+The code rejects any different host or username; secrets are never printed or used in PR tests. The password secret must contain the **database** password, not an FTP password.
 
-The workflow `temp-db-513-check.yml` runs offline tests on PRs and a *read-only* connection preflight on pushes to its designated feature branch. It runs on **GitHub-hosted Linux**, not any other project's private runner. The connection requires TLS with normal public CA and hostname validation and checks the selected database, MariaDB server version and authenticated account. No database modification is permitted in preflight. Its JSON evidence is sanitized and retained for seven days.
+## How the route works
 
-**An IONOS hosting-only database may refuse direct connections from GitHub's external runner.** A failed `SECURE_DB_CONNECTION_FAILED` does not invalidate prior IONOS-to-IONOS PHP connectivity; it means the remote route has not been proved. Do not weaken TLS or connect to another environment to work around this. If blocked, arrange a dedicated *TempTest-only* SSH/SFTP route or private authenticated endpoint, review it separately, and require owner approval before deployment.
+PR checks run offline Python boundary tests and syntax-check the unchanged `index.php`. On feature-branch pushes, a separate GitHub-hosted Linux job opens the existing `https://temp.fisherhq.co.uk/` page over verified HTTPS, obtains its CSRF token and session cookie, and submits the built-in `connect` action using the TempTest database secret. It parses only the page's PASS rows; the code never logs raw page output or credentials.
 
-## Normal-chat issue commands (only after owner-approved merge)
+The first experiment connecting directly from a GitHub runner to the MariaDB TCP host failed `SECURE_DB_CONNECTION_FAILED`; this could reflect external network/TLS restrictions. We therefore use the **existing PHP hosting route** for read-only connection verification. No new PHP is uploaded.
 
-The `temp-db-513-issue.yml` workflow can run only on the repository default branch; the draft PR does not enable it. The repository owner must open a GitHub Issue with an exact title `TEMPTEST-513: status`, `TEMPTEST-513: create`, `TEMPTEST-513: read`, `TEMPTEST-513: update`, `TEMPTEST-513: delete` or `TEMPTEST-513: cleanup`. Exact three-line body with the corresponding operation, e.g.:
+The PHP page checks database identity and current authenticated account. If the account string reported by the hosting server differs from the expected account, the read-only check reports an explicit `account_verified: false` warning. The separate full test is **blocked before any write** until this discrepancy is resolved.
+
+## Chat-triggered test commands (only after explicit owner approval and merge)
+
+Once the dedicated TempTest draft PR is approved and merged onto TempTest `main`, the `issues: opened` workflow can accept only an exact-format Issue authored by the repository owner. Initially the supported commands are `TEMPTEST-513: status` (connection only) and `TEMPTEST-513: full-test` (existing PHP site's full self-cleaning capability test). The exact body for status is:
 
 ```text
 TEMPTEST_513_V1
@@ -22,6 +30,10 @@ operation=status
 database=dbs16231513
 ```
 
-The owner author and GitHub event are checked before any credentials are used. No arbitrary SQL or user-supplied table names/values are accepted. `status` only checks connection and fixture table existence. `create` creates a new synthetic `temptest_chat_probe_513_v1` table (refuses to reuse an existing one) and inserts three fixed rows. `read` shows those rows, `update` changes Beta to UPDATED, `delete` removes Gamma, and `cleanup` removes only that verified fixture table. Each state change requires an individually opened owner issue; cleanup is never automatic. The synthetic rows remain for owner inspection between commands. A mismatch in schema, marker, account, host or database blocks the operation.
+For the full-test, change the title to `TEMPTEST-513: full-test` and the body operation to `operation=full-test`. The existing PHP page then creates its own `work_capability_site_test` table, tests five records, update/delete, schema changes, transactions, migration reversal and cleanup in one server-side request. **This is not separate persistent CRUD across multiple chat turns.** If separate persistent create/read/update/delete is needed later, a dedicated TempTest-only authenticated server-side bridge must be added and deployed with separate owner permission.
 
-Do **not** merge the PR or perform database writes without explicit owner approval. Validation of Python code is not proof that the GitHub-hosted runner can reach IONOS. Read the actual Actions result before claiming connectivity.
+The full-test command performs a first `connect` request and requires the expected authenticated account before invoking any write. It also requires all built-in checks and cleanup to return PASS. The operations and table are fixed; user-supplied SQL is never accepted. No full-test Issues have been created or executed.
+
+## Current validation and approval gates
+
+Review the latest branch/PR Actions evidence. A PASS from offline tests is not live DB proof. Even a PASS from the read-only HTTPS check does not authorise merges or write tests. PR remains draft until the owner explicitly approves merging; no production or live site deployments are part of this task.
