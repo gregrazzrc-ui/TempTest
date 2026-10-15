@@ -35,7 +35,7 @@ def verify_local(env: dict[str, str], base: Path) -> tuple[str, str, str, bytes]
         raise Refuse("OWNER_APPROVAL_MISSING")
     host = env.get("TEMPTEST_IONOS_SFTP_HOST", "").strip()
     username = env.get("TEMPTEST_IONOS_SFTP_USERNAME", "").strip()
-    password = env.get("TEMPTEST_IONOS_SFTP_PASSWORD", "")
+    password = env.get("FHQ_TEMP_SFTP_PASSWORD", "")
     if not host or not username or not password:
         raise Refuse("SFTP_SECRETS_MISSING")
     if any(c.isspace() or c in "/\\@:" for c in host) or len(host) > 253:
