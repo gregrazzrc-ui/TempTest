@@ -3,7 +3,7 @@
  * TempTest ONLY: isolated disposable MariaDB 513 CRUD endpoint.
  *
  * Staged source, not yet deployed. Must be placed only inside public-temptest.
- * Server-side env TEMPTEST_513_BRIDGE_KEY must be set independently of GitHub.
+ * Only the three existing TempTest database secrets are needed.
  * The database password is provided via HTTPS by the GitHub Actions client;
  * it must never be written in this file or committed to the repository.
  */
@@ -136,12 +136,10 @@ function temp513_main(): void {
     if (!extension_loaded('pdo_mysql')) {
         temp513_block('PDO_MYSQL_UNAVAILABLE');
     }
-    // Server-side shared key must be set securely in IONOS PHP environment.
-    $key = getenv('TEMPTEST_513_BRIDGE_KEY');
-    $provided = $_SERVER['HTTP_X_TEMPTEST_BRIDGE_TOKEN'] ?? '';
-    if (!is_string($key) || strlen($key) < 32 ||
-        !is_string($provided) || !hash_equals($key, $provided)) {
-        temp513_block('AUTHORIZATION_REFUSED');
+    // The database password supplied over HTTPS authenticates the fixed PDO account.
+    // This disposable lab endpoint has no additional token or server-side credentials.
+    if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off') {
+        temp513_block('HTTPS_REQUIRED');
     }
     if (isset($_SERVER['CONTENT_LENGTH']) && (int)$_SERVER['CONTENT_LENGTH'] > 2048) {
         temp513_block('REQUEST_TOO_LARGE');
@@ -189,7 +187,7 @@ function temp513_main(): void {
         'database' => TEMP513_DATABASE,
         'operation' => $operation,
         'login_verified' => true,
-        'grant_account_differs' => $identity['grant_user'] !== $identity['login_user'],
+        'grant_account_differs' => explode('@', (string)$identity['grant_user'], 2)[0] !== TEMP513_USER,
     ] + $details);
 }
 try {
