@@ -15,6 +15,9 @@ on:
       - 'tests/test_temp_sftp_deploy.py'
       - 'tests/test_temp_account_identity.py'
       - 'docs/CHAT-BRIDGE.md'
+      - 'docs/IONOS-MARIADB-DATABASE-HOWTO.md'
+      - 'README.md'
+      - 'tests/test_ionos_howto.py'
   push:
     branches: [work/temptest-db513-chat-bridge-20261015]
 permissions:
@@ -30,7 +33,7 @@ jobs:
       - name: Test fixed-operation guards and PHP form parser (no secrets)
         run: |
           python3 -m py_compile scripts/temp_db_513_bridge.py scripts/temp_site_513.py scripts/temp_endpoint_513.py scripts/deploy_temp513_sftp.py
-          python3 -m unittest discover -s tests -p 'test_temp*.py' -v
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
       - name: Existing PHP page syntax (no deployment)
         run: |
           php -l index.php
