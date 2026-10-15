@@ -1,0 +1,38 @@
+name: TempTest 513 - Isolated Live CRUD Acceptance
+on:
+  push:
+    branches: [work/temptest-db513-chat-bridge-20261015]
+    paths: [deploy/temptest-db513-test-trigger.txt]
+permissions:
+  contents: read
+concurrency:
+  group: temptest-db513-live-crud-acceptance
+  cancel-in-progress: false
+jobs:
+  run-once-verified-fixture-test:
+    if: >-
+      github.repository == 'gregrazzrc-ui/TempTest' &&
+      github.actor == 'gregrazzrc-ui' &&
+      github.ref == 'refs/heads/work/temptest-db513-chat-bridge-20261015' &&
+      contains(github.event.head_commit.message, '[temptest-live-crud-513]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify synthetic CREATE READ UPDATE DELETE and cleanup via TempTest PHP
+        env:
+          FHQ_TEMP_DB_513_HOST: ${{ secrets.FHQ_TEMP_DB_513_HOST }}
+          FHQ_TEMP_DB_513_USERNAME: ${{ secrets.FHQ_TEMP_DB_513_USERNAME }}
+          FHQ_TEMP_DB_513_PASSWORD: ${{ secrets.FHQ_TEMP_DB_513_PASSWORD }}
+          TEMPTEST_513_LIVE_WRITE_APPROVED: YES_DB_513_ONLY
+        run: python3 scripts/test_temp513_end_to_end.py
+      - name: Preserve sanitized live test result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: temptest-db513-live-crud-result
+          path: ${{ runner.temp }}/temptest-db513-result.json
+          retention-days: 7
+          if-no-files-found: warn
