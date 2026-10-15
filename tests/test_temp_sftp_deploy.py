@@ -26,8 +26,8 @@ class DeployGuardsTests(unittest.TestCase):
                 "GITHUB_EVENT_NAME": "push",
                 "GITHUB_ACTOR": "gregrazzrc-ui",
                 "TEMPTEST_SFTP_UPLOAD_APPROVED": "YES_ONLY_PUBLIC_TEMPTEST",
-                "TEMPTEST_IONOS_SFTP_HOST": "safe.example.test",
-                "TEMPTEST_IONOS_SFTP_USERNAME": "sftpuser",
+                "FHQ_TEMP_SFTP_HOST": "safe.example.test",
+                "FHQ_TEMP_SFTP_USERNAME": "sftpuser",
                 "FHQ_TEMP_SFTP_PASSWORD": "fake-not-a-real-secret"
             }
             with self.assertRaisesRegex(deploy.Refuse, "SOURCE_OR_PINNED_HOST_KEY_MISSING"):
